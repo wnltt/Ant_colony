@@ -1,0 +1,9 @@
+requests
+bs4
+yarl
+click
+python-nmap
+chardet
+cryptography
+markupsafe
+

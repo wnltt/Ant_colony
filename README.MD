@@ -1,9 +1,15 @@
-# 基于蚁群算法的目录探测脚本
+首次运行：
+    pip install -r requirements.txt               --下载所需的模块
+    电脑中需要安装了nmap
+    linux中dismap运行需要加运行权限
+
+   详细使用看 python Ant_colony.py -h
+
 
 ## Fixed
 
 - 文件名错误或文件内容为空！
-  - git上传空文件夹导致
+- git上传空文件夹导致
   
 ## TODO List
 
@@ -13,6 +19,6 @@
   - linux
   - windows
 - 探测超时；优化探测存活思路；
-- 结果输出csv文件；
+
 
 

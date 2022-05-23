@@ -1,6 +1,7 @@
 import requests, re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+from yarl import URL
 requests.packages.urllib3.disable_warnings()
 
 def Extract_html(URL):    #请求函数
@@ -10,6 +11,8 @@ def Extract_html(URL):    #请求函数
 		raw0 = raw.content.decode("utf-8", "ignore")
 		raw1 = raw.status_code
 		return [raw0,raw1]
+	except KeyboardInterrupt:
+		pass
 	except:
 		return ["flase","flase"]
 
@@ -44,6 +47,20 @@ def extract_URL(JS):   #正则匹配函数
 	js_url = []
 	return [match.group().strip('"').strip("'") for match in result
 		if match.group() not in js_url]
+
+list_ip = []
+def ip_crawling(js):
+    ip_r = re.findall("(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)(:[0-9]{1,5}){0,1}",js)
+    if ip_r:
+        for ip in ip_r:
+            if ip[4] != '':
+                ip = ip[0]+"."+ip[1]+"."+ip[2]+"."+ip[3]+ip[4]
+                if ip not in list_ip:
+                    list_ip.append(ip)
+            else:
+                ip = ip[0]+"."+ip[1]+"."+ip[2]+"."+ip[3]
+                if ip not in list_ip:
+                    list_ip.append(ip)
 
 
 def find_last(string,str):     #匹配域名中点的位置并保存成一个列表返回
@@ -102,9 +119,10 @@ def dns_judge(allurls,url):   #判断是不是所属域名
         suburl = urlparse(singerurl)
         subdomain = suburl.netloc
         #print(singerurl)
-        if miandomain in subdomain or subdomain.strip() == "":  #匹配查看，获取到的url里面有没有子域名
+        if miandomain in subdomain or subdomain.strip() == "":  
             if singerurl.strip() not in result:
                 result.append(singerurl)
+    	
     return result
 
 def find_by_url(url):
@@ -132,12 +150,14 @@ def find_by_url(url):
     for script in script_array:   #script是字典的键
         #print(script)
         temp_urls = extract_URL(script_array[script])   #将对应url的内容传入，进行正则匹配
+        ip_crawling(script_array[script])
         if len(temp_urls) == 0: continue    #如果没有匹配到东西直接跳过本轮循环
 
         for temp_url in temp_urls:     #对从js文件里面匹配到的url进行遍历保存，保存前还是对获取的url进行加工，并保存到 allurls = []
             allurls.append(process_url(script, temp_url)) 
 
-    return dns_judge(allurls,url)
+    a = dns_judge(allurls,url)
+    return  [a,list_ip]
 
 
 def find_by_url_deep(url): #深度爬取,从这开始入手
@@ -172,24 +192,19 @@ def find_by_url_deep(url): #深度爬取,从这开始入手
 			continue
 		temp_urls = find_by_url(link)
 		if temp_urls == None: continue
+		if temp_urls[0] == []: continue
 		# print("Remaining " + str(i) + " | Find " + str(len(temp_urls)) + " URL in " + link)
-		for temp_url in temp_urls:
+		for temp_url in temp_urls[0]:
 			if temp_url[-1] == "/":
 				temp_url = temp_url[::-1].replace('/','', 1)[::-1]
 			if temp_url not in urls:
 				urls.append(temp_url)
 		# i -= 1
-	for url12 in result_main:
-		if url12[-1] == "/":
-			url12 = url12[::-1].replace('/','', 1)[::-1]
-		if url12 not in urls:
-			urls.append(url12)
-	return urls
-	# print("-------------------------------------------------")
-	# print(url+"\n")
-	# for url23 in urls:
-	# 	req = Extract_html(url23)
-	# 	if req != ["flase","flase"]:
-	# 		url23 = url23 + "  | " + str(req[1]) +"  | " +"返回包大小" + str(len(req[0]))
-	# 		print(url23)
-	# return urls
+	for url12 in result_main[0]:
+		if url12: 
+			if url12[-1] == "/":
+				url12 = url12[::-1].replace('/','', 1)[::-1]
+			if url12 not in urls:
+				urls.append(url12)
+	return [urls,list_ip]
+	
