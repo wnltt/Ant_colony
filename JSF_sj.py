@@ -49,18 +49,39 @@ def extract_URL(JS):   #正则匹配函数
 		if match.group() not in js_url]
 
 list_ip = []
+url_ip_list={}
 def ip_crawling(js):
     ip_r = re.findall("(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)(:[0-9]{1,5}){0,1}",js)
     if ip_r:
+        url = re.split("!@xkeyx@!",js)[1]
         for ip in ip_r:
             if ip[4] != '':
                 ip = ip[0]+"."+ip[1]+"."+ip[2]+"."+ip[3]+ip[4]
-                if ip not in list_ip:
-                    list_ip.append(ip)
+                if re.findall(list_ip[0],ip):
+                    pass
+                else:
+                    if ip not in list_ip:
+                        list_ip.append(ip)
+                        try:
+                           d_value = url_ip_list[url] 
+                           d_value = d_value+","+ip
+                           url_ip_list[url] = d_value
+                        except KeyError:
+                           url_ip_list[url] = ip
+	
             else:
-                ip = ip[0]+"."+ip[1]+"."+ip[2]+"."+ip[3]
-                if ip not in list_ip:
-                    list_ip.append(ip)
+                ip = ip[0]+"."+ip[1]+"."+ip[2]+"."+ip[3] 
+                if re.findall(list_ip[0],ip):
+                    pass
+                else:                           
+                    if ip not in list_ip:
+                        list_ip.append(ip)
+                        try:
+                           d_value = url_ip_list[url] 
+                           d_value = d_value+","+ip
+                           url_ip_list[url] = d_value
+                        except KeyError:
+                           url_ip_list[url] = ip
 
 
 def find_last(string,str):     #匹配域名中点的位置并保存成一个列表返回
@@ -125,8 +146,20 @@ def dns_judge(allurls,url):   #判断是不是所属域名
     	
     return result
 
-def find_by_url(url):
+def find_by_url(url,js_crawling):
+    if js_crawling ==1:
+        global list_ip
+        list_ip = []
+        global url_ip_list
+        url_ip_list={}
+    if js_crawling == 1:
+        Native_IP = urlparse(url)
+        ip = Native_IP.netloc
+        if re.findall(':',ip):
+            ip = re.split(":",ip)[0]
+        list_ip.append(ip)
     html_raw = Extract_html(url)[0]    #获取页面的html文本信息
+
     if html_raw == "flase" and  html_raw:         #如果页面没有东西为空返回none
         return None
         
@@ -143,8 +176,8 @@ def find_by_url(url):
             purl = process_url(url, script_src)    #对获取的url二次加工，生成可使用的地址
             st = Extract_html(purl)[0] 
             if st  != "flase" and  st:
-                script_array[purl] = Extract_html(purl)[0]  #对处理的url，进行请求获取页面 ,保存在字典中，对应的url保存对应请求返回的文本
-    script_array[url] = script_temp  
+                script_array[purl] = Extract_html(purl)[0]+"!@xkeyx@!"+purl #对处理的url，进行请求获取页面 ,保存在字典中，对应的url保存对应请求返回的文本
+    script_array[url] = script_temp+"!@xkeyx@!"+ url  
 
     allurls = []
     for script in script_array:   #script是字典的键
@@ -157,11 +190,21 @@ def find_by_url(url):
             allurls.append(process_url(script, temp_url)) 
 
     a = dns_judge(allurls,url)
-    return  [a,list_ip]
+    return  [a,url_ip_list]
 
 
-def find_by_url_deep(url): #深度爬取,从这开始入手
-	res = find_by_url(url)
+def find_by_url_deep(url,js_crawling): #深度爬取,从这开始入手
+	global list_ip
+	list_ip = []
+	global url_ip_list
+	url_ip_list={}
+	if js_crawling == 2:
+		Native_IP = urlparse(url)
+		ip = Native_IP.netloc
+		if re.findall(':',ip):
+			ip = re.split(":",ip)[0]
+		list_ip.append(ip)
+	res = find_by_url(url,js_crawling)
 	if res != None:
 		result_main = res
 	else:
@@ -190,7 +233,7 @@ def find_by_url_deep(url): #深度爬取,从这开始入手
 			pass
 		else:
 			continue
-		temp_urls = find_by_url(link)
+		temp_urls = find_by_url(link,js_crawling)
 		if temp_urls == None: continue
 		if temp_urls[0] == []: continue
 		# print("Remaining " + str(i) + " | Find " + str(len(temp_urls)) + " URL in " + link)
@@ -206,5 +249,6 @@ def find_by_url_deep(url): #深度爬取,从这开始入手
 				url12 = url12[::-1].replace('/','', 1)[::-1]
 			if url12 not in urls:
 				urls.append(url12)
-	return [urls,list_ip]
+
+	return [urls,url_ip_list]
 	
