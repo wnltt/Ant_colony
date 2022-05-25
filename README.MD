@@ -1,9 +1,9 @@
-首次运行：
-    pip install -r requirements.txt               --下载所需的模块
-    电脑中需要安装了nmap
-    linux中dismap运行需要加运行权限
 
-   详细使用看 python Ant_colony.py -h
+## 首次运行：
+-pip install -r requirements.txt        
+-电脑中需要安装了nmap
+-linux中dismap运行需要加运行权限
+-详细使用看 python Ant_colony.py -h
 
 
 ## 1.5 Update content
