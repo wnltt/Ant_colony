@@ -6,12 +6,13 @@
    详细使用看 python Ant_colony.py -h
 
 
-## Fixed
+ ##1.5 Update content
 
-- 文件名错误或文件内容为空！
-- git上传空文件夹导致
-  
-## TODO List
+-修复js爬取为空报错
+-增加js爬取到ip的js文件的url显示
+
+
+## Completed
 
 - 取消`-c`，探测中访问request超时会导致脚本错误，实际错误为运行目录不正确；
 - python3环境判断；
@@ -21,4 +22,6 @@
 - 探测超时；优化探测存活思路；
 
 
+## TODO List
+-后续会增加常见通用漏洞的漏洞检测
 

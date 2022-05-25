@@ -143,10 +143,10 @@ def js_screen(page_200,time_1,js_crawling):#js爬取模块
             html = BeautifulSoup(html_raw, "html.parser")
             if html.findAll("script"):
                 if js_crawling == 1:
-                    JSF_sj_r = JSF_sj.find_by_url(url)
+                    JSF_sj_r = JSF_sj.find_by_url(url,js_crawling)
                     js_url_p = JSF_sj_r[0]
                 elif js_crawling ==2:
-                    JSF_sj_r = JSF_sj.find_by_url_deep(url)
+                    JSF_sj_r = JSF_sj.find_by_url_deep(url,js_crawling)
                     js_url_p = JSF_sj_r[0]
                 if js_url_p:
                     for urlq in js_url_p:
@@ -159,6 +159,9 @@ def js_screen(page_200,time_1,js_crawling):#js爬取模块
                                 ji_shu += 1
                                 urlq = urlq + "         | "+str(res.status_code)+"  | 页面返回包大小"+str(len(res.content.decode("utf-8", "ignore")))
                                 list_p.append(urlq)
+            else:
+                JSF_sj_r = [0,0]
+
             if list_p:
                 print("\n\n================================================\n"+url + "   | 页面js爬取的内容：\n================================================")
                 with open(time_1+".txt", "a",encoding="utf-8") as f:
@@ -167,19 +170,34 @@ def js_screen(page_200,time_1,js_crawling):#js爬取模块
                         print(text)
                         f.write(text+"\n")
                     if JSF_sj_r[1]:
-                        f.write("\njs中爬取到的ip：\n------------------------------------------------\n")
-                        print("\njs中爬取到的ip：\n------------------------------------------------\n")
-                        for ip in JSF_sj_r[1]:
-                            print(ip)
-                            f.write(ip + "\n")
-            if JSF_sj_r[1]:
+                        for url in JSF_sj_r[1]:
+                            f.write("\n"+url+"页面中爬取到的ip：\n------------------------------------------------\n")
+                            print("\n"+url+"页面中爬取到的ip：\n------------------------------------------------\n")
+                            if re.findall(",",JSF_sj_r[1][url]):
+                                ip_list = re.split(",",JSF_sj_r[1][url])
+                                for ip in ip_list:
+                                    print(ip)
+                                    f.write(ip + "\n")
+                            else:
+                                 print(JSF_sj_r[1][url])
+                                 f.write(JSF_sj_r[1][url] + "\n")
+
+            elif JSF_sj_r[1]:
                 ji_shu += 1
-                print("\n\n================================================\n"+url + "   | 页面js爬取的内容：\n================================================")
+                print("\n\n================================================\n"+url + "   | 页面爬取的ip：\n================================================")
                 with open(time_1+".txt", "a",encoding="utf-8") as f:
-                    f.write("\n\n================================================\n"+url + "   | 页面js爬取的内容：\n================================================\n")
-                    for ip in JSF_sj_r[1]:
-                            print(ip)
-                            f.write(ip + "\n")
+                    f.write("\n\n================================================\n"+url+ "   | 页面js爬取的内容：\n================================================\n")
+                    for url in JSF_sj_r[1]:
+                            f.write("\n"+url+"页面中爬取到的ip：\n------------------------------------------------\n")
+                            print("\n"+url+"页面中爬取到的ip：\n------------------------------------------------\n")
+                            if re.findall(",",JSF_sj_r[1][url]):
+                                ip_list = re.split(",",JSF_sj_r[1][url])
+                                for ip in ip_list:
+                                    print(ip)
+                                    f.write(ip + "\n")
+                            else:
+                                 print(JSF_sj_r[1][url])
+                                 f.write(JSF_sj_r[1][url] + "\n")
                             
     return ji_shu
 
@@ -342,7 +360,7 @@ def main():     #主函数
 | (_| | | | | |_ _ _| (_| (_) | | (_) | | | |\_  /
  \__,_|_| |_|\__|    \___\___/|_|\___/|_| |_|_| |
                                             \__/
-Version：1.4.0/202205220131      大雾四起\n
+Version：1.5.0/202205250953      大雾四起\n
             ''', fg='green')
 
     opts, args = getopt.getopt(sys.argv[1:], "-h-t:-j-s-d-c-u:-n-o:-z-r:-p")   #传入参数
