@@ -1,15 +1,15 @@
 
 ## 首次运行：
--pip install -r requirements.txt        
--电脑中需要安装了nmap
--linux中dismap运行需要加运行权限
--详细使用看 python Ant_colony.py -h
+- pip install -r requirements.txt        
+- 电脑中需要安装了nmap
+- linux中dismap运行需要加运行权限
+- 详细使用看 python Ant_colony.py -h
 
 
 ## 1.5 Update content
 
--修复js爬取为空报错
--增加js爬取到ip的js文件的url显示
+- 修复js爬取为空报错
+- 增加js爬取到ip的js文件的url显示
 
 
 ## Completed
@@ -23,5 +23,5 @@
 
 
 ## TODO List
--后续会增加常见通用漏洞的漏洞检测
+- 后续会增加常见通用漏洞的漏洞检测
 
