@@ -5,6 +5,11 @@
 - linux中dismap运行需要加运行权限
 - 详细使用看 python Ant_colony.py -h
 
+## 1.6 Update content
+
+- 修复js爬取爬到外站的ip格式
+- 取消了-t的不必要输出
+- 增加403bypass，对输入的403页面和js爬取到的403页面，进行bypass尝试，也可单独使用该功能
 
 ## 1.5 Update content
 
