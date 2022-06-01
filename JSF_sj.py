@@ -50,7 +50,7 @@ def extract_URL(JS):   #正则匹配函数
 
 list_ip = []
 url_ip_list={}
-def ip_crawling(js):
+def ip_crawling(js,url2):
     ip_r = re.findall("(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)\.(25[0-5]|2[0-4]\d|[0-1]\d{2}|[1-9]?\d)(:[0-9]{1,5}){0,1}",js)
     if ip_r:
         url = re.split("!@xkeyx@!",js)[1]
@@ -62,12 +62,13 @@ def ip_crawling(js):
                 else:
                     if ip not in list_ip:
                         list_ip.append(ip)
-                        try:
-                           d_value = url_ip_list[url] 
-                           d_value = d_value+","+ip
-                           url_ip_list[url] = d_value
-                        except KeyError:
-                           url_ip_list[url] = ip
+                        if dns_judge([url],url2):
+                            try:
+                                d_value = url_ip_list[url] 
+                                d_value = d_value+","+ip
+                                url_ip_list[url] = d_value
+                            except KeyError:
+                                url_ip_list[url] = ip
 	
             else:
                 ip = ip[0]+"."+ip[1]+"."+ip[2]+"."+ip[3] 
@@ -76,12 +77,13 @@ def ip_crawling(js):
                 else:                           
                     if ip not in list_ip:
                         list_ip.append(ip)
-                        try:
-                           d_value = url_ip_list[url] 
-                           d_value = d_value+","+ip
-                           url_ip_list[url] = d_value
-                        except KeyError:
-                           url_ip_list[url] = ip
+                        if dns_judge([url],url2):
+                            try:
+                                d_value = url_ip_list[url] 
+                                d_value = d_value+","+ip
+                                url_ip_list[url] = d_value
+                            except KeyError:
+                                url_ip_list[url] = ip
 
 
 def find_last(string,str):     #匹配域名中点的位置并保存成一个列表返回
@@ -89,7 +91,7 @@ def find_last(string,str):     #匹配域名中点的位置并保存成一个列
 	last_position=-1
 	while True:
 		# position = string.find(str,last_position+1)
-		position = string.find("walhm.top",last_position+1)
+		position = string.find(str,last_position+1)
 		if position == -1:break
 		last_position = position
 		positions.append(position)
@@ -136,7 +138,8 @@ def dns_judge(allurls,url):   #判断是不是所属域名
         miandomain = domain
         if len(positions) > 1:    #获取顶级域名
             miandomain = domain[positions[-2] + 1:]
-
+            if re.findall(":",miandomain):
+                miandomain = miandomain.split(":")[0]
         suburl = urlparse(singerurl)
         subdomain = suburl.netloc
         #print(singerurl)
@@ -183,7 +186,7 @@ def find_by_url(url,js_crawling):
     for script in script_array:   #script是字典的键
         #print(script)
         temp_urls = extract_URL(script_array[script])   #将对应url的内容传入，进行正则匹配
-        ip_crawling(script_array[script])
+        ip_crawling(script_array[script],url)
         if len(temp_urls) == 0: continue    #如果没有匹配到东西直接跳过本轮循环
 
         for temp_url in temp_urls:     #对从js文件里面匹配到的url进行遍历保存，保存前还是对获取的url进行加工，并保存到 allurls = []

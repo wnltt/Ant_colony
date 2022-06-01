@@ -12,6 +12,7 @@ import getopt
 import time 
 import os
 import platform
+import bp_403
 from urllib.parse import urlparse
 requests.packages.urllib3.disable_warnings()
 import random
@@ -132,6 +133,7 @@ def url_screen(dirsearch,time,dirsearch_path):  #这个函数主要是对存活�
                     
 
 def js_screen(page_200,time_1,js_crawling):#js爬取模块
+    list2_403 = []
     ji_shu = 0
     list_ltt = []
     for url in page_200:
@@ -154,6 +156,8 @@ def js_screen(page_200,time_1,js_crawling):#js爬取模块
                         if res == False:
                             continue
                         if res.status_code == 200 or  res.status_code == 302 or res.status_code == 403:
+                            if res.status_code == 403 and urlq not in list2_403:
+                                list2_403.append(urlq)
                             if urlq not in list_ltt:
                                 list_ltt.append(urlq)
                                 ji_shu += 1
@@ -199,7 +203,7 @@ def js_screen(page_200,time_1,js_crawling):#js爬取模块
                                  print(JSF_sj_r[1][url])
                                  f.write(JSF_sj_r[1][url] + "\n")
                             
-    return ji_shu
+    return [ji_shu,list2_403]
 
 def res_title(html):  #获取title
     html = BeautifulSoup(html, "html.parser")
@@ -360,10 +364,10 @@ def main():     #主函数
 | (_| | | | | |_ _ _| (_| (_) | | (_) | | | |\_  /
  \__,_|_| |_|\__|    \___\___/|_|\___/|_| |_|_| |
                                             \__/
-Version：1.5.0/202205250953      大雾四起\n
+Version：1.6.0/202206011102      大雾四起\n
             ''', fg='green')
 
-    opts, args = getopt.getopt(sys.argv[1:], "-h-t:-j-s-d-c-u:-n-o:-z-r:-p")   #传入参数
+    opts, args = getopt.getopt(sys.argv[1:], "-h-t:-j-s-d-c-u:-n-o:-z-r:-p-b")   #传入参数
     dir_switch = 0   #dirseach
     js_crawling = 0  #js爬取
     fingerprint = 0  #指纹识别
@@ -373,6 +377,8 @@ Version：1.5.0/202205250953      大雾四起\n
     http_add = 0     #增加http协议
     get_scan_ip1 = 0 #url中ip获取
     host_detection = 0 #主机存活探测是否开启
+    bypass2_403 = 0  
+    t_judge = 0      
 
 
     for opt_name,opt_value in opts:
@@ -400,8 +406,11 @@ Version：1.5.0/202205250953      大雾四起\n
             ip_port_file = opt_value
         if opt_name == "-t":
             url_file = opt_value
+            t_judge = 1
         if opt_name == "-d":
             dir_switch = 1
+        if opt_name == "-b":
+            bypass2_403 = 1
         if opt_name == "-h":
             print("--------------------------help--------------------------\n\n\
 单个url扫描：\n\n\
@@ -411,7 +420,7 @@ Version：1.5.0/202205250953      大雾四起\n
     -t ： 指定存放url需要扫描的txt文件\n\n\
     -d ： 启用dirsearch扫描生成的每一层目录\n\n\
     -j ： 启用从js中爬取url和ip，会对爬取到url进行访问，如果无法连接和404会被舍弃(相比于深度爬取时间较快，看需求选择)\n\n\
-    -s ： js深度爬取url和ip(-j和-s一起用的话，启用的为深度爬取)\n\n\
+    -s ： js深度爬取url和ip(-j和-s一起用的话，启用的为深度爬取，)\n\n\
     -c ： 开启cms指纹扫描\n\n\
 端口存活探测：\n\n\
     -o ： 指定存放ip:端口或url的文件，进行端口存活探测\n\n\
@@ -419,6 +428,8 @@ Version：1.5.0/202205250953      大雾四起\n
 主机存活探测：\n\n\
     -i ： 指定存放url的文件，可以从url中获取域名/ip并去重(主要作用为多资产为url形式，需要端口扫描，可以通过这样直接获取ip)\n\n\
     -p ： 使用nmap进行主机存活探测，只可和-i联用(但是有的主机可能会阻止我们的ping探测)\n\n\
+403bypass:\n\n\
+    -b ： 默认-u和-t开启对403bypass(js爬取到的403页面也会进行bypass尝试)，当-u和-t与-b特殊指定则只开启403bypass不进行其他操作\n\n\
 常用命令介绍：\n\n\
     python Ant_colony.py -u https://xxx.xx/ -n    --单个url检测使用的命令，不开端口扫描就不需要-n \n\n\
     python Ant_colony.py -t url.txt               --对每个url的每一层目录进行访问，对重复返回的页面进行去重，返回页面的状态码，title和页面大小等信息 \n\n\
@@ -426,11 +437,27 @@ Version：1.5.0/202205250953      大雾四起\n
     python Ant_colony.py -o url.txt -z            --端口探测，并在存活的端口前加上http://(没有这个需求可以不加)\n\n\
     python Ant_colony.py -r url.txt               --从url中获取ip或者域名(当多资产需要端口探测时)    \n\n\
     python Ant_colony.py -r url.txt -p            --主机存活扫描(但是有的主机可能会阻止我们的ping探测)\n\n\
+    python Ant_colony.py -u https://xxx.xx/ -b    --对403页面进行bypass，只进行该操作\n\n\
+    python Ant_colony.py -t url.txt -b            --对文件中的403页面进行bypass，只进行该操作\n\n\
         ")
-
-                
-
             return
+
+    if u_judge==1 and bypass2_403 == 1:
+        list3_403 = bp_403.bypass_main([url_file])
+        if list3_403:
+            pass
+        else:
+            print("我也没办法！(=￣ω￣=)")
+        return
+    
+    if t_judge == 1 and bypass2_403 == 1:
+        with open(url_file,encoding="utf-8") as f:
+            list3_403 = bp_403.bypass_main(f)
+            if list3_403:
+                pass
+            else:
+                print("我也没办法！(=￣ω￣=)")
+        return
 
     if ip_port_file:
         with open(ip_port_file,encoding='utf-8') as url_list:
@@ -453,6 +480,7 @@ Version：1.5.0/202205250953      大雾四起\n
     page_500 = []                   #500页面的url
     page_302 = []
     page_size = {}
+    page_403 = []
 
     for url in url_list:
         url = url.strip()    
@@ -482,11 +510,17 @@ Version：1.5.0/202205250953      大雾四起\n
                 print("------------------------------------------------")
 
         elif statuscode == 404  or statuscode == 403:                #404和403页面判断是否有中间件泄露
+            if statuscode == 403:
+                page_403.append(url)
+                if re.findall("\w{1,12}/\d{1,2}\.",content):
+                    content_404_403_500.append(url+"  | "+str(statuscode)+"  | 可能存在中间件版本泄露！")
+                    print(url+"  | "+str(statuscode)+"  | 可能存在中间件版本泄露！")
+                else:
+                    print(url+"  |  "+str(statuscode) +"  | 403页面")
+
             if re.findall("\w{1,12}/\d{1,2}\.",content):
                 content_404_403_500.append(url+"  | "+str(statuscode)+"  | 可能存在中间件版本泄露！")
-            else:
-                print(url+"  |  "+str(statuscode) +"  | 403/404页面")
-                print("------------------------------------------------")
+                print(url+"  | "+str(statuscode)+"  | 可能存在中间件版本泄露！")
         
         elif statuscode >= 500:          #状态码为500及其以上的，首先判断是否存在中间件版本泄露，如没有就放入列表中，后面可以在生成文件中查看
             if re.findall("\w{1,12}/\d{1,2}\.",content):
@@ -515,9 +549,6 @@ Version：1.5.0/202205250953      大雾四起\n
                     page_200_max.append(url+"           |  返回包大小" + str(len(content)) + "  |  "+title_name )
                     page_size[URL_raw] = qwe + ","+ st
                     print(url+"  |  "+str(statuscode) +"   |  返回包大小" + str(len(content)) + "  |  "+title_name)
-                    print("------------------------------------------------")
-                else:
-                    print(url+"  |  "+str(statuscode) +"   |  返回包大小" + str(len(content)))
                     print("------------------------------------------------")
             except KeyError:
                 title_name= res_title(content)
@@ -558,7 +589,7 @@ Version：1.5.0/202205250953      大雾四起\n
                 f.write(text+"\n")
             f.write("------------------------------------------------\n\n\n\n\n")
     
-    if page_200 or content_404_403_500 or page_500 or page_302:   #判断扫描结果，如果啥都没发现就不生成文件，打印下面这句话
+    if page_200 or content_404_403_500 or page_500 or page_302 or page_403:   #判断扫描结果，如果啥都没发现就不生成文件，打印下面这句话
         pass
     else:
         print("\n------------------------------------------------\n扫了个寂寞，啥都没有发现!ಠ╭╮ಠ\n------------------------------------------------\n")
@@ -567,11 +598,27 @@ Version：1.5.0/202205250953      大雾四起\n
         print("\n\n开始js爬取：")
         with open(time_2+".txt", "a",encoding="utf-8") as f:
                     f.write("\n\njs爬取结果：")
-        if js_screen(page_200,time_2,js_crawling) == 0:
+        js_paqu = js_screen(page_200,time_2,js_crawling)
+        if js_paqu[0] == 0:
             print("\n------------------------------------------------\nJS翻烂了都没看到东西!唉！ಠ╭╮ಠ\n------------------------------------------------\n")
             with open(time_2+".txt", "a",encoding="utf-8") as f:
                     f.write("\n------------------------------------------------\nJS翻烂了都没看到东西!唉!\n------------------------------------------------\n")
+            if js_paqu[1]:   #对爬取的403进行保存
+                for url_10 in js_paqu[1]:
+                    page_403.append(url_10)
     
+    if page_403:
+        print("\n\n开始403bypass：\n")
+        bypass_success = bp_403.bypass_main(page_403)
+        if bypass_success:
+            with open(time_2+".txt", "a",encoding="utf-8") as f:
+                f.write("\n\n403bypass结果：\n================================================\n")
+                for bypass in bypass_success:
+                    f.write("\n"+bypass)
+                f.write("\n\n================================================\n")
+        else:
+            print("\n------------------------------------------------\n全军覆没，没绕过去！ಠ╭╮ಠ\n------------------------------------------------\n")
+
     if nmap_switch:      #开启端口探测
         print("\n\n开始端口扫描：\n")
         ip_scan = url_list_return[1]
