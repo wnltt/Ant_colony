@@ -10,11 +10,17 @@
 - https://github.com/yunemse48/403bypasser
 - 根据需求对以上的项目的部分功能进行摘取和修改。
 
+## 主要功能：
+- 批量对资产进行访问，返回可以正常访问的页面的大小，状态码，title等信息
+- 批量对资产的，每层目录进行目录探测
+- 批量对资产进行js中url爬取并访问，返回可以访问的url和页面大小信息，403页面的bypass，常见漏洞扫描
+- 以上功能也支持-u单个检测
 
 ## 1.7 Update content
 
 - 优化了输出格式
 - 增加了常见漏洞扫描
+- 更新poc库可以直接去https://github.com/tr0uble-mAker/POC-bomber，将最新的poc文件夹，覆盖进来
 
 ## 1.6 Update content
 
