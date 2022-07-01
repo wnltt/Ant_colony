@@ -4,11 +4,11 @@
 - 详细使用看 python Ant_colony.py -h
 
 ## 部分代码来源：
--https://github.com/maurosoria/dirsearch
--https://github.com/tr0uble-mAker/POC-bomber
--https://github.com/Threezh1/JSFinder
--https://github.com/yunemse48/403bypasser
-根据需求对以上的项目的部分功能进行摘取和修改。
+- https://github.com/maurosoria/dirsearch
+- https://github.com/tr0uble-mAker/POC-bomber
+- https://github.com/Threezh1/JSFinder
+- https://github.com/yunemse48/403bypasser
+- 根据需求对以上的项目的部分功能进行摘取和修改。
 
 
 ## 1.7 Update content
