@@ -2,8 +2,13 @@ requests
 bs4
 yarl
 click
-python-nmap
 chardet
 cryptography
 markupsafe
+certifi==2021.10.8
+charset-normalizer==2.0.10
+idna==3.3
+pycryptodome==3.12.0
+requests==2.27.1
+urllib3==1.26.8
 

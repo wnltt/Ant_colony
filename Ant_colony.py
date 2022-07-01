@@ -1,8 +1,8 @@
 import threading
 from tkinter import E
+from inc import console
 import JSF_sj
 from bs4 import BeautifulSoup
-import nmap_1
 import requests
 import socket
 import click
@@ -11,7 +11,6 @@ import sys
 import getopt
 import time 
 import os
-import platform
 import bp_403
 from urllib.parse import urlparse
 requests.packages.urllib3.disable_warnings()
@@ -72,39 +71,6 @@ def mu_split(file_or_url): # 将获取的url进行每一级目录拆分，并生
     return[url_list_max2,Fingerprint_query]
 
 
-def port_detection(url_list):  #端口探测
-    port_die = []   #存储未开放端口
-    port_survival = []  #存储存活端口
-    dir_scan_list = []   #存活端口url存储
-    for url in url_list:
-        URL_raw = urlparse(url)
-        if URL_raw.scheme+URL_raw.netloc not in port_survival and URL_raw.scheme+URL_raw.netloc not in port_die: #判断是否检测过端口存活
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            try:
-                if re.findall(":",URL_raw.netloc):                #对url的端口和ip进行判断，进行存活探测
-                    ip_port = URL_raw.netloc.split(":")
-                    result = sock.connect_ex((ip_port[0],int(ip_port[1])))
-
-                elif URL_raw.scheme == "https":
-                    result = sock.connect_ex((URL_raw.netloc,443))
-
-                elif URL_raw.scheme == "http":
-                    result = sock.connect_ex((URL_raw.netloc,80))
-            except :
-                continue
-
-            if 0 == result:                 
-                dir_scan_list.append(url)
-                port_survival.append(URL_raw.scheme+URL_raw.netloc)
-            else:
-                port_die.append(URL_raw.scheme+URL_raw.netloc)
-
-        elif URL_raw.scheme+URL_raw.netloc in port_survival: #对检测过并存活的端口的url直接保存
-            dir_scan_list.append(url)
-
-    return dir_scan_list
-
-
 def url_division(url_file,u_judge):     #判断传入的是文件还是url，然后对url分割
 
     if u_judge == 0:
@@ -124,8 +90,7 @@ def url_screen(dirsearch,time,dirsearch_path):  #这个函数主要是对存活�
         catalogue = url.split("/")
         if len(catalogue) == 1:    #判断最后一层目录，是文件还是目录，文件就直接舍弃，目录就直接保存到dirsearch目录下
             with open(dirsearch_path+ "urls/" +time+ ".txt", "a",encoding="utf-8") as f:
-                f.write(url2+"\n")
-                
+                f.write(url2+"\n")               
         else:
             if "." not in catalogue[len(catalogue)-1] and "?" not in catalogue[len(catalogue)-1] and  "=" not in catalogue[len(catalogue)-1]:
                 with open(dirsearch_path+ "urls/" +time+ ".txt", "a",encoding="utf-8") as f:
@@ -155,13 +120,14 @@ def js_screen(page_200,time_1,js_crawling):#js爬取模块
                         res = req_url(urlq)
                         if res == False:
                             continue
-                        if res.status_code == 200 or  res.status_code == 302 or res.status_code == 403:
+                        if res.status_code == 200 or res.status_code == 403:
                             if res.status_code == 403 and urlq not in list2_403:
                                 list2_403.append(urlq)
                             if urlq not in list_ltt:
                                 list_ltt.append(urlq)
                                 ji_shu += 1
-                                urlq = urlq + "         | "+str(res.status_code)+"  | 页面返回包大小"+str(len(res.content.decode("utf-8", "ignore")))
+                                # urlq = urlq + "         | "+str(res.status_code)+"  | 页面返回包大小"+str(len(res.content.decode("utf-8", "ignore")))
+                                urlq = '%-10s%-10s' %("["+str(len(res.content.decode("utf-8", "ignore")))+"]",str(res.status_code))+urlq
                                 list_p.append(urlq)
             else:
                 JSF_sj_r = [0,0]
@@ -220,6 +186,7 @@ def res_title(html):  #获取title
 
 port_survival = []  #存储存活端口
 port_survival_2 =[]
+
 def survival_judgment(url):  #端口扫描主程序
     url = url.strip()
         # print(url)
@@ -319,7 +286,7 @@ def survival_judgment_thread(url_list,switch):  #端口扫描30线程
                 else:
                     click.secho("http://"+ip_p, fg='green')
 
-def get_scan_ip(url_list,host_detection):  #url中获取主机ip，和主机存活扫描
+def get_scan_ip(url_list):  #url中获取主机ip
     host1 = []  
     for url in url_list:
         url = url.strip()
@@ -353,8 +320,6 @@ def get_scan_ip(url_list,host_detection):  #url中获取主机ip，和主机存�
         click.secho("\n------------------------------------------------\n粗心！文件都是空的!ಠ╭╮ಠ!\n------------------------------------------------\n",fg='red')
         return
 
-    if host_detection:
-        nmap_1.nmap_host(host1)
 
 def main():     #主函数
     click.secho('''
@@ -364,21 +329,19 @@ def main():     #主函数
 | (_| | | | | |_ _ _| (_| (_) | | (_) | | | |\_  /
  \__,_|_| |_|\__|    \___\___/|_|\___/|_| |_|_| |
                                             \__/
-Version：1.6.0/202206011102      大雾四起\n
+Version：1.7.0/202206080512      大雾四起\n
             ''', fg='green')
 
-    opts, args = getopt.getopt(sys.argv[1:], "-h-t:-j-s-d-c-u:-n-o:-z-r:-p-b")   #传入参数
+    opts, args = getopt.getopt(sys.argv[1:], "-h-t:-j-s-d-u:-o:-z-r:-b-p")   #传入参数
     dir_switch = 0   #dirseach
     js_crawling = 0  #js爬取
-    fingerprint = 0  #指纹识别
     u_judge = 0      #单个url扫描
-    nmap_switch = 0  #nmap
     ip_port_file =0  #纯端口存活探测
     http_add = 0     #增加http协议
     get_scan_ip1 = 0 #url中ip获取
-    host_detection = 0 #主机存活探测是否开启
     bypass2_403 = 0  
-    t_judge = 0      
+    t_judge = 0
+    poc = 0      
 
 
     for opt_name,opt_value in opts:
@@ -386,22 +349,16 @@ Version：1.6.0/202206011102      大雾四起\n
             u_judge = 1
             url_file = opt_value
             js_crawling= 2
-            fingerprint = 1 
+            poc = 1
             dir_switch = 1
-        if opt_name == "-n":
-            nmap_switch = 1
         if opt_name == "-z":
             http_add = 1
         if opt_name == "-j":
-            js_crawling = 1
-        if opt_name == "-c":
-            fingerprint = 1  
+            js_crawling = 1 
         if opt_name == "-s":
             js_crawling= 2
         if opt_name == "-r":
             get_scan_ip1 = opt_value
-        if opt_name == "-p":
-            host_detection = 1
         if opt_name == "-o":
             ip_port_file = opt_value
         if opt_name == "-t":
@@ -409,34 +366,33 @@ Version：1.6.0/202206011102      大雾四起\n
             t_judge = 1
         if opt_name == "-d":
             dir_switch = 1
+        if opt_name == "-p":
+            poc = 1
         if opt_name == "-b":
             bypass2_403 = 1
         if opt_name == "-h":
             print("--------------------------help--------------------------\n\n\
 单个url扫描：\n\n\
-    -u ： 指定url进行扫描(开启指纹探测，js深度爬取，dirsearch每层目录扫描)\n\n\
-    -n ： 开启nmap扫描，暂时只支持和-u一起用，使用前需要安装nmap(使用的nmap参数为 -A -n -v)\n\n\
+    -u ： 指定url进行扫描(js深度爬取，dirsearch每层目录扫描,403bypass,漏洞扫描)\n\n\
 批量url扫描：\n\n\
     -t ： 指定存放url需要扫描的txt文件\n\n\
     -d ： 启用dirsearch扫描生成的每一层目录\n\n\
-    -j ： 启用从js中爬取url和ip，会对爬取到url进行访问，如果无法连接和404会被舍弃(相比于深度爬取时间较快，看需求选择)\n\n\
-    -s ： js深度爬取url和ip(-j和-s一起用的话，启用的为深度爬取，)\n\n\
-    -c ： 开启cms指纹扫描\n\n\
+    -j ： 启用从js中爬取url和ip(相比于深度爬取时间较快)\n\n\
+    -s ： js深度爬取url和ip\n\n\
+    -p ： 常见漏洞扫描\n\n\
 端口存活探测：\n\n\
     -o ： 指定存放ip:端口或url的文件，进行端口存活探测\n\n\
     -z ： 只可以和-o联用，可以为存活的端口增加http://,看需求选择\n\n\
 主机存活探测：\n\n\
-    -i ： 指定存放url的文件，可以从url中获取域名/ip并去重(主要作用为多资产为url形式，需要端口扫描，可以通过这样直接获取ip)\n\n\
-    -p ： 使用nmap进行主机存活探测，只可和-i联用(但是有的主机可能会阻止我们的ping探测)\n\n\
+    -i ： 指定存放url的文件，可以从url中获取域名/ip并去重(主要作用为多资产为url形式，需要端口扫描)\n\n\
 403bypass:\n\n\
-    -b ： 默认-u和-t开启对403bypass(js爬取到的403页面也会进行bypass尝试)，当-u和-t与-b特殊指定则只开启403bypass不进行其他操作\n\n\
+    -b ： -u和-t默认开启对403bypass(js爬取到的403页面也会进行bypass尝试)，当-u和-t与-b特殊指定则只开启403bypass不进行其他操作\n\n\
 常用命令介绍：\n\n\
-    python Ant_colony.py -u https://xxx.xx/ -n    --单个url检测使用的命令，不开端口扫描就不需要-n \n\n\
+    python Ant_colony.py -u https://xxx.xx/       --单个url检测使用的命令\n\n\
     python Ant_colony.py -t url.txt               --对每个url的每一层目录进行访问，对重复返回的页面进行去重，返回页面的状态码，title和页面大小等信息 \n\n\
-    python Ant_colony.py -t url.txt -s -c -d      --批量扫描，对每个url开启js深度爬取(想快一点替换为-j)，指纹识别和每层目录扫描  \n\n\
+    python Ant_colony.py -t url.txt -s -d -p      --批量扫描，对每个url开启js深度爬取(想快一点替换为-j)，漏洞扫描和每层目录扫描(每个参数均可单独使用)  \n\n\
     python Ant_colony.py -o url.txt -z            --端口探测，并在存活的端口前加上http://(没有这个需求可以不加)\n\n\
     python Ant_colony.py -r url.txt               --从url中获取ip或者域名(当多资产需要端口探测时)    \n\n\
-    python Ant_colony.py -r url.txt -p            --主机存活扫描(但是有的主机可能会阻止我们的ping探测)\n\n\
     python Ant_colony.py -u https://xxx.xx/ -b    --对403页面进行bypass，只进行该操作\n\n\
     python Ant_colony.py -t url.txt -b            --对文件中的403页面进行bypass，只进行该操作\n\n\
         ")
@@ -467,7 +423,7 @@ Version：1.6.0/202206011102      大雾四起\n
 
     if get_scan_ip1:
         with open(get_scan_ip1,encoding='utf-8') as url_list:
-            get_scan_ip(url_list,host_detection)
+            get_scan_ip(url_list)
         return 
 
     url_list_return = url_division(url_file,u_judge)   #读取url，并生成
@@ -477,8 +433,6 @@ Version：1.6.0/202206011102      大雾四起\n
     page_200 = []               #需要查看的url
     page_200_max = []           #存放200页面加数据包大小信息
     content_404_403_500 = []   #存在中间件版本泄露的url        
-    page_500 = []                   #500页面的url
-    page_302 = []
     page_size = {}
     page_403 = []
 
@@ -493,11 +447,9 @@ Version：1.6.0/202206011102      大雾四起\n
 
         format_list = ["gnp","fig","gpj","oci","ssc"]    #常见图片格式和css
         if img_determine in format_list:
-            print(url+"  | 图片或css地址")
-            print("------------------------------------------------")
             continue
 
-
+        
         res = req_url(url)
         if res ==False:
             continue
@@ -505,37 +457,30 @@ Version：1.6.0/202206011102      大雾四起\n
         content = res.content.decode("utf-8", "ignore")
         statuscode = res.status_code
 
-        if statuscode != 302  and content == "":   #除了状态码为302
-                print(url+"  | "+str(statuscode) +"  | 页面返回为空")
-                print("------------------------------------------------")
-
-        elif statuscode == 404  or statuscode == 403:                #404和403页面判断是否有中间件泄露
+        if statuscode == 404  or statuscode == 403:                #404和403页面判断是否有中间件泄露
+            re_1 = re.findall("\w{1,12}/\d{1,2}\.",content)
             if statuscode == 403:
                 page_403.append(url)
-                if re.findall("\w{1,12}/\d{1,2}\.",content):
-                    content_404_403_500.append(url+"  | "+str(statuscode)+"  | 可能存在中间件版本泄露！")
-                    print(url+"  | "+str(statuscode)+"  | 可能存在中间件版本泄露！")
+                if re_1:
+                    content_404_403_500.append('%-10s%-10s' %("[-]","[403]")+url+"  |  {"+re_1[0]+"}")
+                    # print(url+"  | "+str(statuscode)+"  | 可能存在中间件版本泄露！")
+                    print('%-10s%-10s' %("[-]","403")+url+"  |  {"+re_1[0]+"}")
+                    print("------------------------------------------------")
                 else:
-                    print(url+"  |  "+str(statuscode) +"  | 403页面")
+                    print('%-10s%-10s' %("[-]","403")+url)
+                    print("------------------------------------------------")
 
-            if re.findall("\w{1,12}/\d{1,2}\.",content):
-                content_404_403_500.append(url+"  | "+str(statuscode)+"  | 可能存在中间件版本泄露！")
-                print(url+"  | "+str(statuscode)+"  | 可能存在中间件版本泄露！")
+            elif re_1:
+                content_404_403_500.append('%-10s%-10s' %("[-]","404")+url+"  |  {"+re_1[0]+"}")
+                print('%-10s%-10s' %("[-]","404")+url+"  |  {"+re_1[0]+"}")
+                print("------------------------------------------------")
         
         elif statuscode >= 500:          #状态码为500及其以上的，首先判断是否存在中间件版本泄露，如没有就放入列表中，后面可以在生成文件中查看
-            if re.findall("\w{1,12}/\d{1,2}\.",content):
-                content_404_403_500.append(url+"  | "+str(statuscode)+"  | 可能存在中间件版本泄露！")
-            else:
-                title_name= res_title(content)
-                page_500.append(url)
-                print(url+"  |  "+str(statuscode) +"  | 500页面" + "|  "+title_name)
+            re_1 = re.findall("\w{1,12}/\d{1,2}\.",content)
+            if re_1:
+                content_404_403_500.append('%-10s%-10s' %("[-]","["+str(statuscode)+"]")+url+"  |  {"+re_1[0]+"}")
+                print('%-10s%-10s' %("[-]","["+str(statuscode)+"]")+url+"  |  {"+re_1[0]+"}")
                 print("------------------------------------------------")
-
-        elif statuscode == 302:                               
-            page_302.append(url)
-            print(url+"  | "+str(statuscode) +"  | 302跳转")
-            # print(content)
-            print("------------------------------------------------")
 
         elif statuscode == 200:       #存储200url并去掉同ip的回显                          
             URL_raw = urlparse(url).netloc
@@ -546,16 +491,17 @@ Version：1.6.0/202206011102      大雾四起\n
                 if st not in list:
                     page_200.append(url)
                     title_name= res_title(content)
-                    page_200_max.append(url+"           |  返回包大小" + str(len(content)) + "  |  "+title_name )
+                    page_200_max.append('%-10s%-10s' %("["+str(len(content))+"]","[200]")+url+ "  |  "+"["+title_name+"]")
                     page_size[URL_raw] = qwe + ","+ st
-                    print(url+"  |  "+str(statuscode) +"   |  返回包大小" + str(len(content)) + "  |  "+title_name)
+                    # print(url+"  |  "+str(statuscode) +"   |  返回包大小" + str(len(content)) + "  |  "+title_name)
+                    print('%-10s%-10s' %("["+str(len(content))+"]","200")+url+ "  |  "+"["+title_name+"]")
                     print("------------------------------------------------")
             except KeyError:
                 title_name= res_title(content)
                 page_size[URL_raw] = str(len(content))
                 page_200.append(url)
-                page_200_max.append(url+"           |  返回包大小" + str(len(content))  + "  |  "+title_name)
-                print(url+"  |  "+str(statuscode) +"   |  返回包大小" + str(len(content)) + "  |  "+title_name)
+                page_200_max.append('%-10s%-10s' %("["+str(len(content))+"]","200")+url+ "  |  "+"["+title_name+"]")
+                print('%-10s%-10s' %("["+str(len(content))+"]","200")+url+ "  |  "+"["+title_name+"]")
                 print("------------------------------------------------")
 
     time_1 = str(time.time()).split(".")[0]  #获取时间戳，生成文件,并将扫描结果保存在文件中
@@ -575,21 +521,7 @@ Version：1.6.0/202206011102      大雾四起\n
             f.write("================================================\n")
 
     
-    if page_302:
-        with open(time_2+".txt", "a",encoding="utf-8") as f:
-            f.write("\n状态码为302的url：\n------------------------------------------------\n")
-            for text in page_302:
-                f.write(text+"\n")
-            f.write("------------------------------------------------\n")
-
-    if page_500:             
-        with open(time_2+".txt", "a",encoding="utf-8") as f:
-            f.write("\n状态码为500的url：\n------------------------------------------------\n")
-            for text in page_500:
-                f.write(text+"\n")
-            f.write("------------------------------------------------\n\n\n\n\n")
-    
-    if page_200 or content_404_403_500 or page_500 or page_302 or page_403:   #判断扫描结果，如果啥都没发现就不生成文件，打印下面这句话
+    if page_200 or content_404_403_500 or  page_403:   #判断扫描结果，如果啥都没发现就不生成文件，打印下面这句话
         pass
     else:
         print("\n------------------------------------------------\n扫了个寂寞，啥都没有发现!ಠ╭╮ಠ\n------------------------------------------------\n")
@@ -619,55 +551,18 @@ Version：1.6.0/202206011102      大雾四起\n
         else:
             print("\n------------------------------------------------\n全军覆没，没绕过去！ಠ╭╮ಠ\n------------------------------------------------\n")
 
-    if nmap_switch:      #开启端口探测
-        print("\n\n开始端口扫描：\n")
-        ip_scan = url_list_return[1]
-        if len(ip_scan) == 1:
-            URL_raw = urlparse(ip_scan[0]).netloc
-            nmap_1.nmap_A_scan(URL_raw,time_2)
-        if len(ip_scan) > 1: 
-            print("目前只支持单ip端口扫描，多ip段开口扫描太过缓慢！")     
-            # for ip in ip_scan:
-            #     URL_raw = urlparse(ip).netloc
-            #     nmap_1.nmap_A_scan(URL_raw,time_2)
+
+    if poc and url_list:
+        print("\n\n开始漏洞扫描：\n")
+        console.pocbomber_console(url_list,time_2+".txt")
 
     if os.path.isfile(sys.path[0]+"\\report\\"+time_1+".txt"):
         click.secho("\n\n扫描结果保存在："+sys.path[0]+"\\report\\"+time_1+".txt中\n", fg='green')
-    #开启指纹探测
-    if fingerprint == 1:
-        print("\n\n开始指纹识别：\n")
-        ip_scan = url_list_return[1]
-        if len(ip_scan) > 1:  
-            with open("dismap/ip/"+time_1+".txt", "a",encoding="utf-8") as f:
-                for text in ip_scan:
-                    f.write(text+"\n")
-            os.chdir("dismap")
-            if (platform.system()=='Windows'):
-                os.system(r"dismap-0.3-windows-amd64.exe -f ip/"+time_1+".txt")
-            elif (platform.system()=='Linux'):
-                os.system(r"./dismap-0.3-linux-amd64 -f ip/"+time_1+".txt")
-            else:
-                os.system(r"./dismap-0.3-darwin-amd64 -f ip/"+time_1+".txt")
-            os.chdir("../")
-            
-        elif len(ip_scan) == 1:
-            os.chdir("dismap")
-            if (platform.system()=='Windows'):
-                os.system(r"dismap-0.3-windows-amd64.exe -u "+ ip_scan[0])
-            elif (platform.system()=='Linux'):
-                os.system(r"./dismap-0.3-linux-amd64  -u "+ ip_scan[0])
-            else:
-                os.system(r"./dismap-0.3-darwin-amd64 -u "+time_1+".txt")
-            os.chdir("../")
-            
-        else:
-            print("无可指纹探测的ip！野熊吧！")
 
     #调用dirsearch对生成的目录进行扫描
-    if dir_switch :
+    if dir_switch and url_list:
         print("\n\n开始目录扫描：\n")
         dirsearch_path = "dirsearch-master/"
-        url_list = port_detection(url_list)
         url_screen(url_list,time_1,dirsearch_path)     
         if  os.system(r"python "+dirsearch_path+"dirsearch.py -l " + dirsearch_path+ "urls/" +time_1+ ".txt") == 0:
             pass
