@@ -88,7 +88,7 @@ Version：1.7.0/202206080512      大雾四起
 
 - 优化了输出格式
 - 增加了常见漏洞扫描
-- 更新poc库可以直接去https://github.com/tr0uble-mAker/POC-bomber，将最新的poc文件夹，覆盖进来
+- 更新poc库可以直接去[POC-bomber](https://github.com/tr0uble-mAker/POC-bomber)，将最新的poc文件夹，覆盖进来
 
 ## 1.6 Update content
 
@@ -116,5 +116,5 @@ Version：1.7.0/202206080512      大雾四起
 
 - 后续会增加常见通用漏洞的漏洞检测
 - [ ] 减少仓库占用
-  - [ ] `pocs/framework/shiro` 下jar包删除；
+  - [x] `pocs/framework/shiro` 下jar包删除；
   - [ ] `.git`文件夹
